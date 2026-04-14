@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Amazing Digital Pinterest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 50%, #6c5ce7 100%);
+            font-family: 'Segoe UI', 'Comic Neue', 'Press Start 2P', cursive, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "✦ ⚡ ★ ✿ ♠ ♣ ♥ ♦ ✦ ⚡ ★ ✿";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.1);
+            white-space: nowrap;
+            pointer-events: none;
+            animation: slide 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #ffd93d;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #ffd93d, #ff6b9d, #a8e6cf);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+            animation: bounce 2s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .circus-btn {
+            background: linear-gradient(135deg, #ffd93d, #ff6b9d);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c1a4a;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: inherit;
+        }
+
+        .circus-btn:hover {
+            transform: scale(1.05) rotate(-2deg);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .pins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 5;
+        }
+
+        .pin-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid #ffd93d;
+            position: relative;
+            animation: cardFloat 0.5s ease;
+        }
+
+        @keyframes cardFloat {
+            from {
+                opacity: 0;
+                transform: translateY(30px) rotate(2deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(0);
+            }
+        }
+
+        .pin-card:hover {
+            transform: translateY(-10px) rotate(1deg);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            border-color: #ff6b9d;
+        }
+
+        .pin-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .pin-info {
+            padding: 15px;
+        }
+
+        .pin-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #c44569;
+            margin-bottom: 5px;
+        }
+
+        .pin-desc {
+            color: #666;
+            font-size: 0.9em;
+            margin: 8px 0;
+        }
+
+        .pin-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            color: #ff6b9d;
+            transition: transform 0.2s;
+        }
+
+        .like-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #fff, #ffeaa7);
+            padding: 30px;
+            border-radius: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 3px solid #ffd93d;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #c44569;
+            border-radius: 15px;
+            font-family: inherit;
+        }
+
+        .modal-content input[type="file"] {
+            border: none;
+            padding: 5px;
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 2px 0 red, -2px 0 blue; }
+            25% { text-shadow: -2px 0 red, 2px 0 blue; }
+            50% { text-shadow: 2px 2px red, -2px -2px blue; }
+        }
+
+        .glitch-text {
+            animation: glitch 3s infinite;
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎪 THE AMAZING DIGITAL PINTEREST 🎭</h1>
+        <p style="color: white; margin-top: 10px;">✨ Добро пожаловать в Цифровой Цирк! Делитесь самыми безумными пинами ✨</p>
+        <button class="circus-btn" onclick="openAddPinModal()">🎨 Добавить новый пин</button>
+    </div>
+
+    <div class="pins-grid" id="pinsGrid">
+    </div>
+
+    <div id="pinModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: #c44569;">🎪 Новое представление!</h2>
+            <input type="text" id="pinTitle" placeholder="Название пина" required>
+            <input type="text" id="pinAuthor" placeholder="Ваше имя (артист цирка)">
+            <textarea id="pinDesc" rows="3" placeholder="Описание..."></textarea>
+            <input type="file" id="pinImage" accept="image/*" required>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="circus-btn" onclick="createPin()" style="flex: 1;">🎪 Опубликовать</button>
+                <button class="circus-btn" onclick="closeModal()" style="background: #666;">❌ Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageBase64 = null;
+        let currentImageMime = null;
+
+        async function loadPins() {
+            try {
+                const response = await fetch('/api/pins');
+                const pins = await response.json();
+                const grid = document.getElementById('pinsGrid');
+                grid.innerHTML = '';
+                
+                pins.forEach(pin => {
+                    grid.appendChild(createPinCard(pin));
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+            }
+        }
+
+        function createPinCard(pin) {
+            const card = document.createElement('div');
+            card.className = 'pin-card';
+            card.innerHTML = `
+                <img class="pin-image" src="${pin.image_data}" alt="${pin.title}">
+                <div class="pin-info">
+                    <div class="pin-title">🎪 ${escapeHtml(pin.title)}</div>
+                    <div class="pin-desc">${escapeHtml(pin.description || '')}</div>
+                    <div class="pin-meta">
+                        <span>🎭 ${escapeHtml(pin.author)}</span>
+                        <div>
+                            <button class="like-btn" onclick="likePin(${pin.id}, this)">❤️ ${pin.likes}</button>
+                            <button class="delete-btn" onclick="deletePin(${pin.id})">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function openAddPinModal() {
+            document.getElementById('pinModal').style.display = 'flex';
+            document.getElementById('pinTitle').value = '';
+            document.getElementById('pinAuthor').value = '';
+            document.getElementById('pinDesc').value = '';
+            document.getElementById('pinImage').value = '';
+            currentImageBase64 = null;
+        }
+
+        function closeModal() {
+            document.getElementById('pinModal').style.display = 'none';
+        }
+
+        document.getElementById('pinImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentImageBase64 = event.target.result;
+                    currentImageMime = file.type;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function createPin() {
+            const title = document.getElementById('pinTitle').value.trim();
+            const author = document.getElementById('pinAuthor').value.trim() || 'Анонимный артист';
+            const description = document.getElementById('pinDesc').value.trim();
+            
+            if (!title) {
+                alert('Название пина обязательно! 🎪');
+                return;
+            }
+            
+            if (!currentImageBase64) {
+                alert('Выберите изображение! 🎨');
+                return;
+            }
+            
+            const pinData = {
+                title: title,
+                author: author,
+                description: description,
+                image_data: currentImageBase64,
+                image_mime: currentImageMime
+            };
+            
+            try {
+                const response = await fetch('/api/pins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pinData)
+                });
+                
+                if (response.ok) {
+                    closeModal();
+                    loadPins();
+                } else {
+                    alert('Ошибка при создании пина 😢');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка соединения с сервером');
+            }
+        }
+        
+        async function likePin(pinId, button) {
+            try {
+                const response = await fetch(`/api/pins/${pinId}/like`, { method: 'POST' });
+                const data = await response.json();
+                button.innerHTML = `❤️ ${data.likes}`;
+            } catch (error) {
+                console.error('Like error:', error);
+            }
+        }
+        
+        async function deletePin(pinId) {
+            if (confirm('Удалить этот пин из цирка? 🎪')) {
+                try {
+                    await fetch(`/api/pins/${pinId}`, { method: 'DELETE' });
+                    loadPins();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                }
+            }
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        loadPins();
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('pinModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
