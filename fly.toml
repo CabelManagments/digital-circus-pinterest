@@ -1,9 +1,9 @@
 app = "digital-circus-pinterest"
 primary_region = "ams"
 
-[build]
-  [build.args]
-    PORT = "8080"
+[mounts]
+  source = "circus_data"
+  destination = "/data"
 
 [http_service]
   internal_port = 8080
@@ -11,17 +11,3 @@ primary_region = "ams"
   auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 0
-
-[[services]]
-  internal_port = 8080
-  protocol = "tcp"
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 25
-    soft_limit = 20
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
