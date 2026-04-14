@@ -1,23 +1,26 @@
-# app.py
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit
 from datetime import datetime
 import os
-import base64
-import re
+import urllib.parse
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Конфигурация базы данных
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'digital_circus.db')
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    uri = urllib.parse.urlparse(DATABASE_URL)
+    uri = uri._replace(netloc=uri.netloc.replace(':@', ':'))
+    app.config['SQLALCHEMY_DATABASE_URI'] = uri.geturl()
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///digital_circus.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
-# Модель пина
 class Pin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -64,6 +67,7 @@ def create_pin():
     )
     db.session.add(pin)
     db.session.commit()
+    socketio.emit('new_pin', pin.to_dict(), broadcast=True)
     return jsonify(pin.to_dict()), 201
 
 @app.route('/api/pins/<int:pin_id>/like', methods=['POST'])
@@ -71,6 +75,7 @@ def like_pin(pin_id):
     pin = Pin.query.get_or_404(pin_id)
     pin.likes += 1
     db.session.commit()
+    socketio.emit('like_update', {'id': pin_id, 'likes': pin.likes}, broadcast=True)
     return jsonify({'likes': pin.likes})
 
 @app.route('/api/pins/<int:pin_id>', methods=['DELETE'])
@@ -78,7 +83,8 @@ def delete_pin(pin_id):
     pin = Pin.query.get_or_404(pin_id)
     db.session.delete(pin)
     db.session.commit()
+    socketio.emit('delete_pin', {'id': pin_id}, broadcast=True)
     return jsonify({'message': 'Pin deleted'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    socketio.run(app, host='0.0.0.0', port=8080)
